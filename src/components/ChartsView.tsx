@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ReferenceLine } from 'recharts'
 import { timeToSeconds, secondsToTime, parseRepsWeight } from '@/lib/utils'
 import type { Entry, HealthFactor, HealthFactorGroup, User, ScoresData } from '@/db/schema'
 
@@ -33,6 +33,18 @@ export default function ChartsView({
     }))
   }, [healthFactors, healthFactorGroups])
 
+  const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const todayFull = new Date().toISOString().split('T')[0]
+
+  const ensureToday = (data: any[]) => {
+    if (data.length === 0) return data
+    const last = data[data.length - 1]
+    if (last.fullDate < todayFull) {
+      data.push({ date: todayStr, fullDate: todayFull })
+    }
+    return data
+  }
+
   const processTimeData = (factor: HealthFactor) => {
     const data: any[] = []
     
@@ -60,7 +72,7 @@ export default function ChartsView({
       }
     })
     
-    return data.sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime())
+    return ensureToday(data.sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()))
   }
 
   const processWeightData = (factor: HealthFactor) => {
@@ -90,7 +102,7 @@ export default function ChartsView({
       }
     })
     
-    return data.sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime())
+    return ensureToday(data.sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()))
   }
 
   const processRepsWeightData = (factor: HealthFactor) => {
@@ -131,8 +143,8 @@ export default function ChartsView({
     const sortFn = (a: any, b: any) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
     
     return {
-      combined: combinedData.sort(sortFn),
-      volume: volumeData.sort(sortFn)
+      combined: ensureToday(combinedData.sort(sortFn)),
+      volume: ensureToday(volumeData.sort(sortFn))
     }
   }
 
@@ -183,6 +195,7 @@ export default function ChartsView({
                           />
                           <Tooltip content={<CustomTimeTooltip />} />
                           <Legend />
+                          <ReferenceLine x={todayStr} stroke="#3B82F6" strokeDasharray="3 3" strokeWidth={2} label={{ value: 'Today', position: 'top', fill: '#3B82F6', fontSize: 12 }} />
                           {users.map(user => (
                             <Line 
                               key={user.id}
@@ -191,6 +204,7 @@ export default function ChartsView({
                               stroke={user.color}
                               strokeWidth={2}
                               dot={{ fill: user.color, r: 4 }}
+                              connectNulls={false}
                             />
                           ))}
                         </LineChart>
@@ -225,6 +239,7 @@ export default function ChartsView({
                             }}
                           />
                           <Legend />
+                          <ReferenceLine x={todayStr} stroke="#3B82F6" strokeDasharray="3 3" strokeWidth={2} label={{ value: 'Today', position: 'top', fill: '#3B82F6', fontSize: 12 }} />
                           {users.map(user => (
                             <Line 
                               key={user.id}
@@ -233,6 +248,7 @@ export default function ChartsView({
                               stroke={user.color}
                               strokeWidth={2}
                               dot={{ fill: user.color, r: 4 }}
+                              connectNulls={false}
                             />
                           ))}
                         </LineChart>
@@ -283,6 +299,7 @@ export default function ChartsView({
                               }}
                             />
                             <Legend />
+                            <ReferenceLine x={todayStr} yAxisId="weight" stroke="#3B82F6" strokeDasharray="3 3" strokeWidth={2} label={{ value: 'Today', position: 'top', fill: '#3B82F6', fontSize: 12 }} />
                             {activeUsers.map(user => (
                               <Bar 
                                 key={`${user.id}-weight`}
@@ -327,6 +344,7 @@ export default function ChartsView({
                               }}
                             />
                             <Legend />
+                            <ReferenceLine x={todayStr} stroke="#3B82F6" strokeDasharray="3 3" strokeWidth={2} label={{ value: 'Today', position: 'top', fill: '#3B82F6', fontSize: 12 }} />
                             {users.map(user => (
                               <Line 
                                 key={user.id}
@@ -335,6 +353,7 @@ export default function ChartsView({
                                 stroke={user.color}
                                 strokeWidth={2}
                                 dot={{ fill: user.color, r: 4 }}
+                                connectNulls={false}
                               />
                             ))}
                           </LineChart>

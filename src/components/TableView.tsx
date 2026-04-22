@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { formatTime, formatWeight, formatRepsWeight } from '@/lib/utils'
 import type { Entry, HealthFactor, HealthFactorGroup, User, ScoresData } from '@/db/schema'
 
@@ -37,6 +37,25 @@ export default function TableView({
       .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
   }, [entries])
 
+  const today = new Date().toISOString().split('T')[0]
+  const highlightDate = dates.includes(today)
+    ? today
+    : [...dates].reverse().find(d => d <= today) || dates[dates.length - 1]
+
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+  const highlightRef = useRef<HTMLTableCellElement>(null)
+
+  useEffect(() => {
+    if (highlightRef.current && tableContainerRef.current) {
+      const container = tableContainerRef.current
+      const cell = highlightRef.current
+      const containerRect = container.getBoundingClientRect()
+      const cellRect = cell.getBoundingClientRect()
+      const scrollLeft = cell.offsetLeft - container.offsetLeft - (containerRect.width / 2) + (cellRect.width / 2)
+      container.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' })
+    }
+  }, [entries])
+
   const entryMap = useMemo(() => {
     return entries.reduce((acc, entry) => {
       acc[entry.date] = entry.scores as ScoresData
@@ -64,7 +83,7 @@ export default function TableView({
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="overflow-auto">
+      <div className="overflow-auto" ref={tableContainerRef}>
         <table className="w-full border-collapse">
           <thead>
             <tr>
@@ -74,7 +93,12 @@ export default function TableView({
               {dates.map(date => (
                 <th 
                   key={date}
-                  className="border border-border p-3 text-center font-medium text-foreground min-w-[120px]"
+                  ref={date === highlightDate ? highlightRef : null}
+                  className={`border border-border p-3 text-center font-medium min-w-[120px] ${
+                    date === highlightDate 
+                      ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' 
+                      : 'text-foreground'
+                  }`}
                 >
                   {new Date(date).toLocaleDateString('en-US', { 
                     month: 'short', 
@@ -101,7 +125,9 @@ export default function TableView({
                       {factor.name}
                     </td>
                     {dates.map(date => (
-                      <td key={date} className="border border-border p-2 text-center">
+                      <td key={date} className={`border border-border p-2 text-center ${
+                        date === highlightDate ? 'bg-blue-500/10 border-blue-500/40' : ''
+                      }`}>
                         {entryMap[date] && (
                           <div className="space-y-1">
                             {Object.entries(entryMap[date]).map(([userId, userScores]) => {

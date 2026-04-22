@@ -94,8 +94,7 @@ export default function ChartsView({
   }
 
   const processRepsWeightData = (factor: HealthFactor) => {
-    const repsData: any[] = []
-    const weightData: any[] = []
+    const combinedData: any[] = []
     const volumeData: any[] = []
     
     entries.forEach(entry => {
@@ -105,9 +104,9 @@ export default function ChartsView({
         day: 'numeric' 
       })
       
-      const repsPoint: any = { date: dateStr, fullDate: entry.date }
-      const weightPoint: any = { date: dateStr, fullDate: entry.date }
+      const combinedPoint: any = { date: dateStr, fullDate: entry.date }
       const volumePoint: any = { date: dateStr, fullDate: entry.date }
+      let hasData = false
       
       Object.entries(scores).forEach(([userId, userScores]) => {
         const score = userScores[factor.id.toString()]
@@ -115,16 +114,16 @@ export default function ChartsView({
           const user = userMap[parseInt(userId)]
           if (user) {
             const { reps, weight, volume } = parseRepsWeight(score)
-            repsPoint[user.name] = reps
-            weightPoint[user.name] = weight
+            combinedPoint[`${user.name} reps`] = reps
+            combinedPoint[`${user.name} weight`] = weight
             volumePoint[user.name] = volume
+            hasData = true
           }
         }
       })
       
-      if (Object.keys(repsPoint).length > 2) {
-        repsData.push(repsPoint)
-        weightData.push(weightPoint)
+      if (hasData) {
+        combinedData.push(combinedPoint)
         volumeData.push(volumePoint)
       }
     })
@@ -132,8 +131,7 @@ export default function ChartsView({
     const sortFn = (a: any, b: any) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
     
     return {
-      reps: repsData.sort(sortFn),
-      weight: weightData.sort(sortFn),
+      combined: combinedData.sort(sortFn),
       volume: volumeData.sort(sortFn)
     }
   }
@@ -243,74 +241,70 @@ export default function ChartsView({
                   </div>
                 )
               } else if (factor.unit === 'reps_weight') {
-                const { reps, weight, volume } = processRepsWeightData(factor)
-                if (reps.length === 0) return null
+                const { combined, volume } = processRepsWeightData(factor)
+                if (combined.length === 0) return null
+
+                // Figure out which users have data for this factor
+                const activeUsers = users.filter(u =>
+                  combined.some((d: any) => d[`${u.name} reps`] != null)
+                )
                 
                 return (
                   <div key={factor.id} className="space-y-4">
                     <h3 className="text-lg font-medium">{factor.name}</h3>
                     
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-card border border-border rounded-lg p-4">
-                        <h4 className="text-md font-medium mb-2">Reps</h4>
-                        <div className="h-48">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={reps}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                              <XAxis 
-                                dataKey="date" 
-                                stroke="hsl(var(--muted-foreground))"
+                    <div className="bg-card border border-border rounded-lg p-4">
+                      <h4 className="text-md font-medium mb-2">Reps & Weight</h4>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={combined}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis 
+                              dataKey="date" 
+                              stroke="hsl(var(--muted-foreground))"
+                            />
+                            <YAxis 
+                              yAxisId="weight"
+                              orientation="left"
+                              stroke="hsl(var(--muted-foreground))"
+                              label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft', offset: -5, style: { fill: 'hsl(var(--muted-foreground))' } }}
+                            />
+                            <YAxis 
+                              yAxisId="reps"
+                              orientation="right"
+                              stroke="hsl(var(--muted-foreground))"
+                              label={{ value: 'Reps', angle: 90, position: 'insideRight', offset: 5, style: { fill: 'hsl(var(--muted-foreground))' } }}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--card))', 
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Legend />
+                            {activeUsers.map(user => (
+                              <Bar 
+                                key={`${user.id}-weight`}
+                                yAxisId="weight"
+                                dataKey={`${user.name} weight`}
+                                fill={user.color}
+                                radius={[3, 3, 0, 0] as any}
+                                barSize={20}
                               />
-                              <YAxis stroke="hsl(var(--muted-foreground))" />
-                              <Tooltip 
-                                contentStyle={{ 
-                                  backgroundColor: 'hsl(var(--card))', 
-                                  border: '1px solid hsl(var(--border))',
-                                  borderRadius: '8px'
-                                }}
+                            ))}
+                            {activeUsers.map(user => (
+                              <Bar 
+                                key={`${user.id}-reps`}
+                                yAxisId="reps"
+                                dataKey={`${user.name} reps`}
+                                fill={`${user.color}66`}
+                                radius={[3, 3, 0, 0] as any}
+                                barSize={20}
                               />
-                              <Legend />
-                              {users.map(user => (
-                                <Bar 
-                                  key={user.id}
-                                  dataKey={user.name}
-                                  fill={user.color}
-                                />
-                              ))}
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-card border border-border rounded-lg p-4">
-                        <h4 className="text-md font-medium mb-2">Weight (lbs)</h4>
-                        <div className="h-48">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={weight}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                              <XAxis 
-                                dataKey="date" 
-                                stroke="hsl(var(--muted-foreground))"
-                              />
-                              <YAxis stroke="hsl(var(--muted-foreground))" />
-                              <Tooltip 
-                                contentStyle={{ 
-                                  backgroundColor: 'hsl(var(--card))', 
-                                  border: '1px solid hsl(var(--border))',
-                                  borderRadius: '8px'
-                                }}
-                              />
-                              <Legend />
-                              {users.map(user => (
-                                <Bar 
-                                  key={user.id}
-                                  dataKey={user.name}
-                                  fill={user.color}
-                                />
-                              ))}
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
                     

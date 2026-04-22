@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface NavigationProps {
-  currentView: 'table' | 'charts'
-  onViewChange: (view: 'table' | 'charts') => void
+  currentView: 'table' | 'charts' | 'forecast'
+  onViewChange: (view: 'table' | 'charts' | 'forecast') => void
 }
 
 export default function Navigation({ currentView, onViewChange }: NavigationProps) {
@@ -34,6 +34,17 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
             )}
           >
             Charts View
+          </button>
+          <button
+            onClick={() => onViewChange('forecast')}
+            className={cn(
+              'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+              currentView === 'forecast'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Forecast
           </button>
         </div>
       </div>

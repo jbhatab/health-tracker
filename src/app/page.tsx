@@ -5,11 +5,10 @@ import Header from '@/components/Header'
 import Navigation from '@/components/Navigation'
 import TableView from '@/components/TableView'
 import ChartsView from '@/components/ChartsView'
-import ForecastView from '@/components/ForecastView'
 import type { Entry, HealthFactor, HealthFactorGroup, User } from '@/db/schema'
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'table' | 'charts' | 'forecast'>('table')
+  const [currentView, setCurrentView] = useState<'table' | 'charts'>('table')
   const [entries, setEntries] = useState<Entry[]>([])
   const [healthFactors, setHealthFactors] = useState<HealthFactor[]>([])
   const [healthFactorGroups, setHealthFactorGroups] = useState<HealthFactorGroup[]>([])
@@ -91,15 +90,8 @@ export default function Home() {
           healthFactorGroups={healthFactorGroups}
           users={users}
         />
-      ) : currentView === 'charts' ? (
-        <ChartsView 
-          entries={entries}
-          healthFactors={healthFactors}
-          healthFactorGroups={healthFactorGroups}
-          users={users}
-        />
       ) : (
-        <ForecastView 
+        <ChartsView 
           entries={entries}
           healthFactors={healthFactors}
           healthFactorGroups={healthFactorGroups}

@@ -180,7 +180,8 @@ export default function ChartsView({
                 
                 return (
                   <div key={factor.id} className="bg-card border border-border rounded-lg p-4">
-                    <h3 className="text-lg font-medium mb-4">{factor.name}</h3>
+                    <h3 className="text-lg font-medium mb-1">{factor.name}</h3>
+                    {factor.description && <p className="text-sm text-muted-foreground mb-3">{factor.description}</p>}
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data}>

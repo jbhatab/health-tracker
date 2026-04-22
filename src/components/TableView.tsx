@@ -122,7 +122,10 @@ export default function TableView({
                 {group.factors.map(factor => (
                   <tr key={factor.id} className="hover:bg-muted/50">
                     <td className="sticky left-0 bg-card border border-border p-3 font-medium text-foreground">
-                      {factor.name}
+                      <div>{factor.name}</div>
+                      {factor.description && (
+                        <div className="text-xs text-muted-foreground font-normal mt-0.5">{factor.description}</div>
+                      )}
                     </td>
                     {dates.map(date => (
                       <td key={date} className={`border border-border p-2 text-center ${
